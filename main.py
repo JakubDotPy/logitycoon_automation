@@ -6,6 +6,9 @@ from enum import auto
 
 from config import setup_logging
 
+setup_logging()
+log = logging.getLogger(__name__)
+
 
 class FreightState(Flag):
     ACCEPTED = auto()
@@ -38,7 +41,7 @@ class Freight:
     }
 
     def __post_init__(self):
-        self.state_gen = self.state_url_generator()
+        self.state_gen = self.state_generator()
 
     def __iter__(self):
         return self
@@ -47,14 +50,19 @@ class Freight:
         if self.state == FreightState.FINISHING:
             raise StopIteration
 
+        state = next(self.state_gen)
+        url = self.next_state_url[state]
+        self.request_next_state(url)
+
     def request_next_state(self, url):
-        pass
+        log.info(f'transitioning from {self.state}')
+        log.debug(f'here be request with {url}')
+        self.state = next(self.state_gen)
+        log.debug(f'now in {self.state}')
 
     @staticmethod
-    def state_url_generator():
-        for state in FreightState:
-            if state not in FreightState.TRANSITION:
-                yield state
+    def state_generator():
+        yield from FreightState
 
 
 @dataclass
@@ -106,12 +114,12 @@ class TechnicalManager(Employee):
 
 
 def main() -> int:
-    setup_logging()
-    log = logging.getLogger(__name__)
-
     log.info(' START '.center(80, '='))
 
     f = Freight(123456)
+
+    for _ in f:
+        pass
 
     return 0
 
