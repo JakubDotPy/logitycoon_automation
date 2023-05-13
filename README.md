@@ -35,7 +35,7 @@ docker-compose up -d
 
 - Clone the tool from this repo.
 - Log in the game in a browser.
-- Copy the cookie string into a file named `.env-secret` in a format `TYCOON_COOKIE=jointhedarksidewehavecookies`.
+- Copy the cookie string into a file named `.env_secret` in a format `TYCOON_COOKIE=jointhedarksidewehavecookies`.
 - Run the tool using docker or python.
 
 ## Release History
