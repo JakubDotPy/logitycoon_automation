@@ -1,0 +1,35 @@
+### choose freight
+POST https://www.logitycoon.com/eu1/ajax/trip_accept.php
+Content-Type: application/x-www-form-urlencoded
+Cookie: {{cookie}}
+
+freight=123456
+
+### freight autoall
+GET https://www.logitycoon.com/eu1/ajax/freight_autoall.?n=27223524&token=158839118
+
+
+### freight autotruck
+GET https://www.logitycoon.com/eu1/ajax/freight_autotruck.php
+Cookie: {{cookie}}
+
+
+### freight autotrailer
+GET https://www.logitycoon.com/eu1/ajax/freight_autotrailer.php
+Cookie: {{cookie}}
+
+
+### freight autoemployee
+GET https://www.logitycoon.com/eu1/ajax/freight_autowhemployee.php?n=27210519&token=158839118
+Cookie: {{cookie}}
+
+
+### freigt unloading
+GET https://www.logitycoon.com/eu1/ajax/freight_unloading.php
+Cookie: {{cookie}}
+
+
+
+### freigt finish
+GET https://www.logitycoon.com/eu1/ajax/freight_finish.php?f=27210522&token=175317188
+Cookie: {{cookie}}
