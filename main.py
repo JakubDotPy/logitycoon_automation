@@ -200,15 +200,12 @@ def main() -> int:
 
     lt.load_freight_ids()
 
-    # in loop
-    # TODO: - create freight
-    # TODO: - assign assets
-    # TODO: - go through the states
+    for fr_num in lt.active_freight_ids:
+        f = Freight(fr_num, session=lt.session)
+        f.assign_freight_assets()
+        # TODO: go through freight stages
 
-    # fr1 = Freight(27520269, session=lt.session)
-    # fr1.assign_freight_assets()
-    # fr2 = Freight(27520266, session=lt.session)
-    # fr2.assign_freight_assets()
+    # NOTE: find a way to make this async maybe
 
     return 0
 
