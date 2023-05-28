@@ -5,14 +5,14 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
-CONFIG = {
+ENV = {
     **dotenv_values('env/.env_secret'),  # secret values
     **dotenv_values('env/.env_public'),
     **os.environ,  # override loaded values with environment variables
 }
 
 # urls
-AJAX_URL = CONFIG['AJAX_URL']
+AJAX_URL = ENV['AJAX_URL']
 
 CURRENT_DIR = Path.cwd()
 LOGS_DIR = CURRENT_DIR / 'logs'
