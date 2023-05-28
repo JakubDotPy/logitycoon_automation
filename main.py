@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 from dataclasses import dataclass
 from enum import Flag
 from enum import auto
@@ -34,6 +35,7 @@ class FreightState(Flag):
 @dataclass
 class Freight:
     _id: int
+    session: HTMLSession
     state: FreightState = FreightState.ACCEPTED
 
     next_state_url = {
@@ -66,6 +68,30 @@ class Freight:
     @staticmethod
     def state_generator():
         yield from FreightState
+
+    def _assign_employee(self):
+        r = self.session.get(
+            "https://www.logitycoon.com/eu1/ajax/freight_autowhemployee.php",
+            params={'n': self._id, 'token': self.session.user_token}
+        )
+
+    def _assign_truck(self):
+        r = self.session.get(
+            "https://www.logitycoon.com/eu1/ajax/freight_autotruck.php",
+            params={'n': self._id, 'token': self.session.user_token}
+        )
+
+    def _assign_trailer(self):
+        r = self.session.get(
+            "https://www.logitycoon.com/eu1/ajax/freight_autotrailer.php",
+            params={'n': self._id, 'token': self.session.user_token}
+        )
+
+    def assign_freight_assets(self):
+        log.info(f'assigning assets to freight {self._id}')
+        self._assign_employee()
+        self._assign_truck()
+        self._assign_trailer()
 
 
 @dataclass
@@ -117,9 +143,11 @@ class TechnicalManager(Employee):
 
 
 class LTAgent:
-    def __init__(self, token):
-        self.token = token
+    def __init__(self, user_token):
+        # session details
+        self.token = user_token
         self.session = HTMLSession()
+        self.session.user_token = user_token  # session will carry token for further use
         self.session.headers.update({
             "Accept": "*/*",
             "Accept-Encoding": "br,deflate,gzip,x-gzip",
@@ -135,7 +163,16 @@ class LTAgent:
             "X-Requested-With": "XMLHttpRequest",
         })
         self.session.headers.update({'Cookie': ENV['LT_COOKIE']})
+
+        # game details
+        self.active_freight_ids = set()
+
         log.debug('agent prepared')
+
+    def get_trip_id(self):
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=trips')
+        row = r.html.find('input[name="freight[]"]')
+        return int(row[0].attrs['value'])
 
     def accept_trip(self, trip_id):
         r = self.session.get(
@@ -144,39 +181,34 @@ class LTAgent:
         )
         print(r.text)
 
-    def _assign_employee(self, freight_n):
-        r = self.session.get(
-            "https://www.logitycoon.com/eu1/ajax/freight_autowhemployee.php",
-            params={'n': freight_n, 'token': self.token}
+    def load_freight_ids(self):
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
+        rows = r.html.find('table:first-of-type tr[onclick]')
+        self.active_freight_ids = set(
+            map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows))
         )
-
-    def _assign_truck(self, freight_n):
-        r = self.session.get(
-            "https://www.logitycoon.com/eu1/ajax/freight_autotruck.php",
-            params={'n': freight_n, 'token': self.token}
-        )
-
-    def _assign_trailer(self, freight_n):
-        r = self.session.get(
-            "https://www.logitycoon.com/eu1/ajax/freight_autotrailer.php",
-            params={'n': freight_n, 'token': self.token}
-        )
-
-    def assign_to_freight(self, freight_n):
-        self._assign_employee(freight_n)
-        self._assign_truck(freight_n)
-        self._assign_trailer(freight_n)
 
 
 def main() -> int:
     log.info(' START '.center(80, '='))
 
-    lt = LTAgent(token=465104375)
-    lt.accept_trip(335656596)
+    lt = LTAgent(user_token=465104375)
 
-    # lt._assign_employee(27520371)
+    best_trip_id = lt.get_trip_id()
 
-    lt.assign_to_freight(27520371)
+    # TODO: n times accept best trip
+
+    lt.load_freight_ids()
+
+    # in loop
+    # TODO: - create freight
+    # TODO: - assign assets
+    # TODO: - go through the states
+
+    # fr1 = Freight(27520269, session=lt.session)
+    # fr1.assign_freight_assets()
+    # fr2 = Freight(27520266, session=lt.session)
+    # fr2.assign_freight_assets()
 
     return 0
 
