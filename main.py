@@ -170,16 +170,21 @@ class LTAgent:
         log.debug('agent prepared')
 
     def get_trip_id(self):
+        log.info('choosing best trip')
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=trips')
         row = r.html.find('input[name="freight[]"]')
         return int(row[0].attrs['value'])
 
     def accept_trip(self, trip_id):
-        r = self.session.get(
+        """Accept the trip by ID.
+
+        Performs a post request.
+        """
+        log.info(f'accepting trip {trip_id}')
+        self.session.post(
             "https://www.logitycoon.com/eu1/ajax/trip_accept.php",
-            params={'freight[]': 335656596},
+            data={'freight[]': trip_id},
         )
-        print(r.text)
 
     def load_freight_ids(self):
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
@@ -187,6 +192,11 @@ class LTAgent:
         self.active_freight_ids = set(
             map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows))
         )
+
+    def count_cars(self):
+        # NOTE: so far only counts the number of cars
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
+        return len(r.html.find('.mt-action-details')) // 2
 
 
 def main() -> int:
@@ -196,7 +206,9 @@ def main() -> int:
 
     best_trip_id = lt.get_trip_id()
 
-    # TODO: n times accept best trip
+    num_cars = lt.count_cars()
+    for _ in range(num_cars):
+        lt.accept_trip(best_trip_id)
 
     lt.load_freight_ids()
 

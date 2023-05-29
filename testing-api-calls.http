@@ -3,7 +3,7 @@ POST https://www.logitycoon.com/eu1/ajax/trip_accept.php
 Content-Type: application/x-www-form-urlencoded
 Cookie: {{cookie}}
 
-freight[]=335656596
+freight[]=336098046
 
 ### freight autoall
 GET https://www.logitycoon.com/eu1/ajax/freight_autoall?n=27519645
