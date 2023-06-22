@@ -1,17 +1,30 @@
 import datetime
+import functools
 import logging
+import random
 import re
+import time
 from dataclasses import dataclass
 from enum import Flag
 from enum import auto
 
 from requests_html import HTMLSession
 
+from config import AJAX_URL
 from config import ENV
 from config import setup_logging
 
 setup_logging()
 log = logging.getLogger(__name__)
+
+
+def add_random_delay(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        time.sleep(random.randint(2, 3))
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class FreightState(Flag):
@@ -38,7 +51,7 @@ class Freight:
     session: HTMLSession
     state: FreightState = FreightState.ACCEPTED
 
-    next_state_url = {
+    next_state_command = {
         FreightState.ACCEPTED: 'freight_loading',
         FreightState.LOADED: 'freight_driving',
         FreightState.ARRIVED: 'freight_unloading',
@@ -59,11 +72,25 @@ class Freight:
         url = self.next_state_url[state]
         self.request_next_state(url)
 
-    def request_next_state(self, url):
+    def request_next_state(self):
         log.info(f'transitioning from {self.state}')
-        log.debug(f'here be request with {url}')
+        if command := self.next_state_command.get(self.state):
+            self._push_the_button(command)
         self.state = next(self.state_gen)
         log.debug(f'now in {self.state}')
+
+    @add_random_delay
+    def _push_the_button(self, command):
+        """
+        url: "ajax/freight_unloading.php",
+        data: {n: "27210522", token: "175317188"}
+        
+        https://www.logitycoon.com/eu1/ajax/freight_finish.php?f=28029159&token=145380983
+        """
+        r = self.session.get(
+            f"{AJAX_URL}{command}.php",
+            params={'f': self._id, 'token': self.session.user_token}
+        )
 
     @staticmethod
     def state_generator():
@@ -71,22 +98,23 @@ class Freight:
 
     def _assign_employee(self):
         r = self.session.get(
-            "https://www.logitycoon.com/eu1/ajax/freight_autowhemployee.php",
+            f"{AJAX_URL}freight_autowhemployee.php",
             params={'n': self._id, 'token': self.session.user_token}
         )
 
     def _assign_truck(self):
         r = self.session.get(
-            "https://www.logitycoon.com/eu1/ajax/freight_autotruck.php",
+            f"{AJAX_URL}freight_autotruck.php",
             params={'n': self._id, 'token': self.session.user_token}
         )
 
     def _assign_trailer(self):
         r = self.session.get(
-            "https://www.logitycoon.com/eu1/ajax/freight_autotrailer.php",
+            f"{AJAX_URL}freight_autotrailer.php",
             params={'n': self._id, 'token': self.session.user_token}
         )
 
+    @add_random_delay
     def assign_freight_assets(self):
         log.info(f'assigning assets to freight {self._id}')
         self._assign_employee()
@@ -143,11 +171,10 @@ class TechnicalManager(Employee):
 
 
 class LTAgent:
-    def __init__(self, user_token):
+    def __init__(self):
         # session details
-        self.token = user_token
         self.session = HTMLSession()
-        self.session.user_token = user_token  # session will carry token for further use
+        self.session.user_token = self.token = None  # session will carry token for further use
         self.session.headers.update({
             "Accept": "*/*",
             "Accept-Encoding": "br,deflate,gzip,x-gzip",
@@ -169,6 +196,16 @@ class LTAgent:
 
         log.debug('agent prepared')
 
+    @property
+    def _random_freight_id(self):
+        return next(iter(self.active_freight_ids))
+
+    def load_token(self):
+        log.info('getting token')
+        freight_id = self._random_freight_id
+        r = self.session.get(f'https://www.logitycoon.com/eu1/index.php?a=freight&n={freight_id}')
+        self.token = self.session.user_token = int(re.findall(r'token: "(\d+)"', r.text)[0])
+
     def get_trip_id(self):
         log.info('choosing best trip')
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=trips')
@@ -181,10 +218,7 @@ class LTAgent:
         Performs a post request.
         """
         log.info(f'accepting trip {trip_id}')
-        self.session.post(
-            "https://www.logitycoon.com/eu1/ajax/trip_accept.php",
-            data={'freight[]': trip_id},
-        )
+        self.session.post(f"{AJAX_URL}trip_accept.php", data={'freight[]': trip_id})
 
     def load_freight_ids(self):
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
@@ -202,7 +236,7 @@ class LTAgent:
 def main() -> int:
     log.info(' START '.center(80, '='))
 
-    lt = LTAgent(user_token=465104375)
+    lt = LTAgent()
 
     best_trip_id = lt.get_trip_id()
 
@@ -211,11 +245,13 @@ def main() -> int:
         lt.accept_trip(best_trip_id)
 
     lt.load_freight_ids()
+    lt.load_token()
 
     for fr_num in lt.active_freight_ids:
         f = Freight(fr_num, session=lt.session)
         f.assign_freight_assets()
         # TODO: go through freight stages
+        f.request_next_state()
 
     # NOTE: find a way to make this async maybe
 
