@@ -1,31 +1,14 @@
 import logging
 import re
-from abc import ABC
-from abc import abstractmethod
 
 from requests_html import HTMLSession
 
 from config import AJAX_URL
 from config import ENV
 from config import INDEX_URL
+from interfaces.base import Interface
 
 log = logging.getLogger(__name__)
-
-
-class Interface(ABC):
-
-    # TODO: define methods
-
-    @abstractmethod
-    def get_trip_id(self) -> int:
-        raise NotImplementedError
-
-    @abstractmethod
-    def accept_trip(self, trip_id: int) -> None:
-        raise NotImplementedError
-
-    def __str__(self):
-        return f'{self.__class__.__name__}'
 
 
 class WebInterface(Interface):
@@ -73,7 +56,3 @@ class WebInterface(Interface):
 
     def accept_trip(self, trip_id: int) -> None:
         self.session.post(f"{AJAX_URL}trip_accept.php", data={'freight[]': trip_id})
-
-
-class TestInterface(Interface):
-    pass
