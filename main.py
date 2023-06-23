@@ -18,10 +18,10 @@ setup_logging()
 log = logging.getLogger(__name__)
 
 
-def add_random_delay(func):
+def random_delay(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        time.sleep(random.randint(2, 3))
+        time.sleep(random.randint(5, 10) // 10)
         return func(*args, **kwargs)
 
     return wrapper
@@ -79,18 +79,24 @@ class Freight:
         self.state = next(self.state_gen)
         log.debug(f'now in {self.state}')
 
-    @add_random_delay
+    @random_delay
     def _push_the_button(self, command):
-        """
-        url: "ajax/freight_unloading.php",
-        data: {n: "27210522", token: "175317188"}
-        
-        https://www.logitycoon.com/eu1/ajax/freight_finish.php?f=28029159&token=145380983
-        """
         r = self.session.get(
             f"{AJAX_URL}{command}.php",
             params={'f': self._id, 'token': self.session.user_token}
         )
+
+    def _start_loading(self):
+        self._push_the_button(self.next_state_command[FreightState.ACCEPTED])
+
+    def _drive(self):
+        self._push_the_button(self.next_state_command[FreightState.LOADED])
+
+    def _unload(self):
+        self._push_the_button(self.next_state_command[FreightState.ARRIVED])
+
+    def _finish(self):
+        self._push_the_button(self.next_state_command[FreightState.UNLOADED])
 
     @staticmethod
     def state_generator():
@@ -114,7 +120,7 @@ class Freight:
             params={'n': self._id, 'token': self.session.user_token}
         )
 
-    @add_random_delay
+    @random_delay
     def assign_freight_assets(self):
         log.info(f'assigning assets to freight {self._id}')
         self._assign_employee()
