@@ -21,7 +21,8 @@ log = logging.getLogger(__name__)
 def random_delay(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        time.sleep(random.randint(5, 10) // 10)
+        delay = random.randint(8, 15) / 10
+        time.sleep(delay)
         return func(*args, **kwargs)
 
     return wrapper
