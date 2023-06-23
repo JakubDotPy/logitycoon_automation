@@ -86,16 +86,16 @@ class Freight:
             params={'f': self._id, 'token': self.session.user_token}
         )
 
-    def _start_loading(self):
+    def start_loading(self) -> None:
         self._push_the_button(self.next_state_command[FreightState.ACCEPTED])
 
-    def _drive(self):
+    def drive(self) -> None:
         self._push_the_button(self.next_state_command[FreightState.LOADED])
 
-    def _unload(self):
+    def unload(self) -> None:
         self._push_the_button(self.next_state_command[FreightState.ARRIVED])
 
-    def _finish(self):
+    def finish(self) -> None:
         self._push_the_button(self.next_state_command[FreightState.UNLOADED])
 
     @staticmethod
@@ -121,7 +121,7 @@ class Freight:
         )
 
     @random_delay
-    def assign_freight_assets(self):
+    def assign_assets(self):
         log.info(f'assigning assets to freight {self._id}')
         self._assign_employee()
         self._assign_truck()
@@ -198,27 +198,23 @@ class LTAgent:
         self.session.headers.update({'Cookie': ENV['LT_COOKIE']})
 
         # game details
-        self.active_freight_ids = set()
+        self.active_freights: list[Freight] = []
 
         log.debug('agent prepared')
 
-    @property
-    def _random_freight_id(self):
-        return next(iter(self.active_freight_ids))
-
-    def load_token(self):
+    def _load_token(self) -> None:
         log.info('getting token')
-        freight_id = self._random_freight_id
+        freight_id = self.active_freights[0]._id
         r = self.session.get(f'https://www.logitycoon.com/eu1/index.php?a=freight&n={freight_id}')
         self.token = self.session.user_token = int(re.findall(r'token: "(\d+)"', r.text)[0])
 
-    def get_trip_id(self):
+    def get_trip_id(self) -> int:
         log.info('choosing best trip')
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=trips')
         row = r.html.find('input[name="freight[]"]')
         return int(row[0].attrs['value'])
 
-    def accept_trip(self, trip_id):
+    def accept_trip(self, trip_id: int) -> None:
         """Accept the trip by ID.
 
         Performs a post request.
@@ -226,14 +222,20 @@ class LTAgent:
         log.info(f'accepting trip {trip_id}')
         self.session.post(f"{AJAX_URL}trip_accept.php", data={'freight[]': trip_id})
 
-    def load_freight_ids(self):
+    def _read_freight_ids(self) -> list[int]:
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
         rows = r.html.find('table:first-of-type tr[onclick]')
-        self.active_freight_ids = set(
-            map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows))
-        )
+        return list(map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows)))
 
-    def count_cars(self):
+    def create_freights(self) -> None:
+        self.active_freights = [
+            Freight(num, self.session)
+            for num in self._read_freight_ids()
+        ]
+        self._load_token()
+
+    @property
+    def car_count(self) -> int:
         # NOTE: so far only counts the number of cars
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
         return len(r.html.find('.mt-action-details')) // 2
@@ -245,19 +247,15 @@ def main() -> int:
     lt = LTAgent()
 
     best_trip_id = lt.get_trip_id()
-
-    num_cars = lt.count_cars()
-    for _ in range(num_cars):
+    for _ in range(lt.car_count):
         lt.accept_trip(best_trip_id)
 
-    lt.load_freight_ids()
-    lt.load_token()
+    lt.create_freights()
 
-    for fr_num in lt.active_freight_ids:
-        f = Freight(fr_num, session=lt.session)
-        f.assign_freight_assets()
+    for freight in lt.active_freights:
+        freight.assign_assets()
         # TODO: go through freight stages
-        f.request_next_state()
+        freight.start_loading()
 
     # NOTE: find a way to make this async maybe
 
