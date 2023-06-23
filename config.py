@@ -12,7 +12,9 @@ ENV = {
 }
 
 # urls
-AJAX_URL = ENV['AJAX_URL']
+SERVER_URL = ENV['SERVER_URL']
+INDEX_URL = SERVER_URL + '/index.php'
+AJAX_URL = SERVER_URL + 'ajax/'
 
 CURRENT_DIR = Path.cwd()
 LOGS_DIR = CURRENT_DIR / 'logs'
