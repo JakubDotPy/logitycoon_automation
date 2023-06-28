@@ -10,7 +10,9 @@ from enum import auto
 
 from requests_html import HTMLSession
 
+from config import ACTION_SLEEP_DELAY
 from config import AJAX_URL
+from config import ASD_MINS
 from config import ENV
 from config import setup_logging
 
@@ -311,8 +313,8 @@ def main() -> int:
             freight.assign_assets()
             freight.start_loading()
 
-        log.info('sleeping 5 minutes')
-        time.sleep(5 * 60)
+        log.info(f'sleeping {ASD_MINS} minutes')
+        time.sleep(ACTION_SLEEP_DELAY)
 
         # bruteforce try all options
         for fn_name in fns:
@@ -324,8 +326,8 @@ def main() -> int:
                     log.info(f'- {fn_name}')
                     continue  # to next freight
 
-            log.info('sleeping 5 minutes')
-            time.sleep(5 * 60)
+            log.info(f'sleeping {ASD_MINS} minutes')
+            time.sleep(ACTION_SLEEP_DELAY)
 
     return 0
 

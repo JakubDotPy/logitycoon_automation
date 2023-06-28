@@ -18,6 +18,9 @@ CURRENT_DIR = Path.cwd()
 LOGS_DIR = CURRENT_DIR / 'logs'
 OUTPUT_DIR = CURRENT_DIR / 'output'
 
+ACTION_SLEEP_DELAY = 5 * 60  # 5 minutes
+ASD_MINS = round(ACTION_SLEEP_DELAY / 60, 1)  # used in logs
+
 LOG_CONF = {
     'version': 1,
     'formatters': {
