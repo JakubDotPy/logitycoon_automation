@@ -310,7 +310,8 @@ def main() -> int:
             freight.assign_assets()
             freight.start_loading()
 
-        time.sleep(5 * 60)  # sleep 5 minutes
+        log.info('sleeping 5 minutes')
+        time.sleep(5 * 60)
 
         # bruteforce try all options
         for fn_name in fns:
@@ -322,7 +323,7 @@ def main() -> int:
                     log.info(f'- {fn_name}')
                     continue  # to next freight
 
-            # sleep 5 minutes at the end of action
+            log.info('sleeping 5 minutes')
             time.sleep(5 * 60)
 
     return 0
