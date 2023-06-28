@@ -1,5 +1,6 @@
 import datetime
 import functools
+import itertools
 import logging
 import random
 import re
@@ -81,23 +82,24 @@ class Freight:
         log.debug(f'now in {self.state}')
 
     @random_delay
-    def _push_the_button(self, command):
+    def _push_the_button(self, command) -> tuple[int, str]:
         r = self.session.get(
             f"{AJAX_URL}{command}.php",
             params={'f': self._id, 'token': self.session.user_token}
         )
+        return r.status_code, r.text
 
-    def start_loading(self) -> None:
-        self._push_the_button(self.next_state_command[FreightState.ACCEPTED])
+    def start_loading(self) -> tuple[int, str]:
+        return self._push_the_button(self.next_state_command[FreightState.ACCEPTED])
 
-    def drive(self) -> None:
-        self._push_the_button(self.next_state_command[FreightState.LOADED])
+    def drive(self) -> tuple[int, str]:
+        return self._push_the_button(self.next_state_command[FreightState.LOADED])
 
-    def unload(self) -> None:
-        self._push_the_button(self.next_state_command[FreightState.ARRIVED])
+    def unload(self) -> tuple[int, str]:
+        return self._push_the_button(self.next_state_command[FreightState.ARRIVED])
 
-    def finish(self) -> None:
-        self._push_the_button(self.next_state_command[FreightState.UNLOADED])
+    def finish(self) -> tuple[int, str]:
+        return self._push_the_button(self.next_state_command[FreightState.UNLOADED])
 
     @staticmethod
     def state_generator():
@@ -128,6 +130,8 @@ class Freight:
         self._assign_truck()
         self._assign_trailer()
 
+    def __str__(self):
+        return f'Freight {self._id}'
 
 @dataclass
 class Employee:
@@ -242,8 +246,9 @@ class LTAgent:
         return len(r.html.find('.mt-action-details')) // 2
 
 
-def main() -> int:
-    log.info(' START '.center(80, '='))
+def accept_and_load() -> None:
+    """Accept the best trips, create freights and start loading."""
+    log.info(' accept_and_load '.center(80, '='))
 
     lt = LTAgent()
 
@@ -255,11 +260,32 @@ def main() -> int:
 
     for freight in lt.active_freights:
         freight.assign_assets()
-        # TODO: go through freight stages
         freight.start_loading()
 
-    # NOTE: find a way to make this async maybe
 
+def push_green_button() -> None:
+    """Go through all freights and press the green button to continue."""
+
+    log.info('-- performing next steps')
+
+    lt = LTAgent()
+    lt.create_freights()
+
+    fns = [
+        'drive',
+        'unload',
+        'finish',
+    ]
+
+    # bruteforce try all options
+    for freight, fn_name in itertools.product(lt.active_freights, fns):
+        code, resp_text = getattr(freight, fn_name)()
+        if 'setTimeout' in resp_text:
+            log.info(f'{freight} - {fn_name}')
+            continue
+
+
+def main() -> int:
     return 0
 
 
