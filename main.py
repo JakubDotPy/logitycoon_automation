@@ -1,6 +1,5 @@
 import datetime
 import functools
-import itertools
 import logging
 import random
 import re
@@ -278,12 +277,14 @@ def push_green_button() -> None:
     ]
 
     # bruteforce try all options
-    for freight, fn_name in itertools.product(lt.active_freights, fns):
+
+    for freight in lt.active_freights:
         log.info(f'processing {freight}')
-        code, resp_text = getattr(freight, fn_name)()
-        if 'setTimeout' in resp_text:
-            log.info(f'- {fn_name}')
-            continue
+        for fn_name in fns:
+            code, resp_text = getattr(freight, fn_name)()
+            if 'setTimeout' in resp_text:
+                log.info(f'- {fn_name}')
+                continue
 
 
 def main() -> int:
