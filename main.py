@@ -208,7 +208,7 @@ class LTAgent:
         log.debug('agent prepared')
 
     def _load_token(self) -> None:
-        log.info('getting token')
+        log.debug('getting token')
         freight_id = self.active_freights[0]._id
         r = self.session.get(f'https://www.logitycoon.com/eu1/index.php?a=freight&n={freight_id}')
         self.token = self.session.user_token = int(re.findall(r'token: "(\d+)"', r.text)[0])
@@ -248,7 +248,7 @@ class LTAgent:
 
 def accept_and_load() -> None:
     """Accept the best trips, create freights and start loading."""
-    log.info(' accept_and_load '.center(80, '='))
+    log.info(' accept_and_load '.center(40, '='))
 
     lt = LTAgent()
 
@@ -279,13 +279,52 @@ def push_green_button() -> None:
 
     # bruteforce try all options
     for freight, fn_name in itertools.product(lt.active_freights, fns):
+        log.info(f'processing {freight}')
         code, resp_text = getattr(freight, fn_name)()
         if 'setTimeout' in resp_text:
-            log.info(f'{freight} - {fn_name}')
+            log.info(f'- {fn_name}')
             continue
 
 
 def main() -> int:
+    log.info(' AUTOMATION '.center(80, '='))
+    log.warning('experimental - use at own risk')
+
+    lt = LTAgent()
+
+    fns = [
+        'drive',
+        'unload',
+        'finish',
+    ]
+
+    while True:
+        best_trip_id = lt.get_trip_id()
+        for _ in range(lt.car_count):
+            lt.accept_trip(best_trip_id)
+
+        lt.create_freights()
+
+        # accept and load
+        for freight in lt.active_freights:
+            freight.assign_assets()
+            freight.start_loading()
+
+        time.sleep(5 * 60)  # sleep 5 minutes
+
+        # bruteforce try all options
+        for fn_name in fns:
+            # for all freights, try the option
+            for freight in lt.active_freights:
+                log.info(f'processing {freight}')
+                code, resp_text = getattr(freight, fn_name)()
+                if 'setTimeout' in resp_text:
+                    log.info(f'- {fn_name}')
+                    continue  # to next freight
+
+            # sleep 5 minutes at the end of action
+            time.sleep(5 * 60)
+
     return 0
 
 
