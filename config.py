@@ -21,6 +21,8 @@ OUTPUT_DIR = CURRENT_DIR / 'output'
 ACTION_SLEEP_DELAY = 5 * 60  # 5 minutes
 ASD_MINS = round(ACTION_SLEEP_DELAY / 60, 1)  # used in logs
 
+CLICK_DELAY_INTERVAL = 8, 11  # from-to tenth seconds
+
 LOG_CONF = {
     'version': 1,
     'formatters': {

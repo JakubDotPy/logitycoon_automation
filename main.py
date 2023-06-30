@@ -244,6 +244,18 @@ class LTAgent:
         ]
         self._load_token()
 
+    def get_step_delay(self) -> int:
+        """Read the delay before next step can be performed."""
+
+        def to_seconds(text):
+            h, m, s = map(int, re.findall('\d+', text))
+            return h * 3_600 + m * 60 + s
+
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
+        spans = r.html.find('span[id^="ready-noxs"]')
+        seconds = [to_seconds(span.text) for span in spans]
+        return max(seconds) + 10  # add som minimal buffer
+
     @property
     def car_count(self) -> int:
         # NOTE: so far only counts the number of cars
@@ -301,13 +313,17 @@ def main() -> int:
     lt = LTAgent()
 
     fns = [
-        'drive',
+        'drive',  # 4:10
+        'continue_driving',
         'unload',
-        'finish',
+        'finish',  # 3:41
     ]
 
-    while True:
+    for trip_no in itertools.count(start=1):
+        log.info(f' {trip_no:>2}. trip '.center(80, '='))
+
         best_trip_id = lt.get_trip_id()
+
         for _ in range(lt.car_count):
             lt.accept_trip(best_trip_id)
 
@@ -318,21 +334,23 @@ def main() -> int:
             freight.assign_assets()
             freight.start_loading()
 
-        log.info(f'sleeping {ASD_MINS} minutes')
-        time.sleep(ACTION_SLEEP_DELAY)
+        delay = lt.get_step_delay()
+        log.info(f'sleeping {delay} seconds')
+        time.sleep(delay)
 
         # bruteforce try all options
         for fn_name in fns:
+
+            log.info(f'now - {fn_name}')
+
             # for all freights, try the option
             for freight in lt.active_freights:
                 log.info(f'processing {freight}')
                 code, resp_text = getattr(freight, fn_name)()
-                if 'setTimeout' in resp_text:
-                    log.info(f'- {fn_name}')
-                    continue  # to next freight
 
-            log.info(f'sleeping {ASD_MINS} minutes')
-            time.sleep(ACTION_SLEEP_DELAY)
+            delay = lt.get_step_delay()
+            log.info(f'sleeping {delay} seconds')
+            time.sleep(delay)
 
     return 0
 

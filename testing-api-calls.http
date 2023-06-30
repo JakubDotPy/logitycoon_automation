@@ -20,7 +20,7 @@ Cookie: {{cookie}}
 
 
 ###
-GET https://www.logitycoon.com/eu1/ajax/freight_finish.php?f=28029177&token=245566735
+GET https://www.logitycoon.com/eu1/ajax/freight_unloading.php?f=28181436&token=450018455
 Cookie: {{cookie}}
 
 ###
