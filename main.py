@@ -1,5 +1,6 @@
 import datetime
 import functools
+import itertools
 import logging
 import random
 import re
@@ -10,9 +11,8 @@ from enum import auto
 
 from requests_html import HTMLSession
 
-from config import ACTION_SLEEP_DELAY
 from config import AJAX_URL
-from config import ASD_MINS
+from config import CLICK_DELAY_INTERVAL
 from config import ENV
 from config import setup_logging
 
@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 def random_delay(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        delay = random.randint(8, 15) / 10
+        delay = random.randint(*CLICK_DELAY_INTERVAL) / 10
         time.sleep(delay)
         return func(*args, **kwargs)
 
@@ -96,6 +96,9 @@ class Freight:
     def drive(self) -> tuple[int, str]:
         return self._push_the_button(self.next_state_command[FreightState.LOADED])
 
+    def continue_driving(self) -> tuple[int, str]:
+        return self._push_the_button('freight_continue')
+
     def unload(self) -> tuple[int, str]:
         return self._push_the_button(self.next_state_command[FreightState.ARRIVED])
 
@@ -133,6 +136,7 @@ class Freight:
 
     def __str__(self):
         return f'Freight {self._id}'
+
 
 @dataclass
 class Employee:
@@ -274,6 +278,7 @@ def push_green_button() -> None:
 
     fns = [
         'drive',
+        'continue_driving',
         'unload',
         'finish',
     ]
