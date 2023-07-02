@@ -2,6 +2,11 @@ import enum
 import logging
 from dataclasses import dataclass
 
+from requests_html import HTMLSession
+
+from config import AJAX_URL
+from utils import random_delay
+
 log = logging.getLogger(__name__)
 
 
@@ -63,22 +68,27 @@ class Freight:
             f"{AJAX_URL}{command}.php",
             params={'f': self._id, 'token': self.session.user_token}
         )
+        return r.status_code, r.text
 
     def start_loading(self) -> None:
         log.info(f'{self._id} - loading')
-        self._push_the_button(self.next_state_command[FreightState.ACCEPTED])
+        return self._push_the_button(self.next_state_command[FreightState.ACCEPTED])
 
     def drive(self) -> None:
         log.info(f'{self._id} - driving')
-        self._push_the_button(self.next_state_command[FreightState.LOADED])
+        return self._push_the_button(self.next_state_command[FreightState.LOADED])
+
+    def continue_driving(self) -> tuple[int, str]:
+        log.info(f'{self._id} - continue driving')
+        return self._push_the_button('freight_continue')
 
     def unload(self) -> None:
         log.info(f'{self._id} - unloading')
-        self._push_the_button(self.next_state_command[FreightState.ARRIVED])
+        return self._push_the_button(self.next_state_command[FreightState.ARRIVED])
 
     def finish(self) -> None:
         log.info(f'{self._id} - finishing')
-        self._push_the_button(self.next_state_command[FreightState.UNLOADED])
+        return self._push_the_button(self.next_state_command[FreightState.UNLOADED])
 
     @staticmethod
     def state_generator():
@@ -111,3 +121,6 @@ class Freight:
         self._assign_employee()
         self._assign_truck()
         self._assign_trailer()
+
+    def __str__(self):
+        return f'Freight {self._id}'

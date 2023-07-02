@@ -1,8 +1,11 @@
+import itertools
 import logging
+import time
 
+from company.managers import FreightManager
 from config import setup_logging
-from interfaces import Interface
-from interfaces import WebInterface
+from interfaces.base import Interface
+from interfaces.web import WebInterface
 
 setup_logging()
 log = logging.getLogger(__name__)
@@ -22,7 +25,50 @@ class Game:
         log.info(' END '.center(80, '='))
 
     def play(self):
-        log.info('playing')
+        log.info(' AUTOMATION '.center(80, '='))
+        log.warning('experimental - use at own risk')
+
+        fm = FreightManager(self.interface)
+
+        fns = [
+            'drive',  # 4:10
+            'continue_driving',
+            'unload',
+            'finish',  # 3:41
+        ]
+
+        for trip_no in itertools.count(start=1):
+            log.info(f' {trip_no:>2}. trip '.center(80, '='))
+
+            best_trip_id = fm.get_trip_id()
+
+            for _ in range(fm.car_count):
+                fm.accept_trip(best_trip_id)
+
+            fm.create_freights()
+
+            # accept and load
+            for freight in fm.active_freights:
+                freight.assign_assets()
+                freight.start_loading()
+
+            delay = fm.get_step_delay()
+            log.info(f'sleeping {delay} seconds')
+            time.sleep(delay)
+
+            # bruteforce try all options
+            for fn_name in fns:
+
+                log.info(f'now - {fn_name}')
+
+                # for all freights, try the option
+                for freight in fm.active_freights:
+                    log.info(f'processing {freight}')
+                    code, resp_text = getattr(freight, fn_name)()
+
+                delay = fm.get_step_delay()
+                log.info(f'sleeping {delay} seconds')
+                time.sleep(delay)
 
 
 def main() -> int:

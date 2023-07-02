@@ -56,3 +56,25 @@ class WebInterface(Interface):
 
     def accept_trip(self, trip_id: int) -> None:
         self.session.post(f"{AJAX_URL}trip_accept.php", data={'freight[]': trip_id})
+
+    def read_freight_ids(self) -> list[int]:
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
+        rows = r.html.find('table:first-of-type tr[onclick]')
+        return list(map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows)))
+
+    def get_step_delay(self) -> int:
+        """Read the delay before next step can be performed."""
+
+        def to_seconds(text: str) -> int:
+            h, m, s = map(int, re.findall('\d+', text))
+            return h * 3_600 + m * 60 + s
+
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
+        spans = r.html.find('span[id^="ready-noxs"]')
+        seconds = [to_seconds(span.text) for span in spans]
+        return max(seconds, default=3) + 10  # add some minimal buffer
+
+    def car_count(self):
+        # NOTE: so far only counts the number of cars
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
+        return len(r.html.find('.mt-action-details')) // 2

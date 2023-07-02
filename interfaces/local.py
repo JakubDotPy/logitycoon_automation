@@ -16,3 +16,15 @@ class LocalInterface(Interface):
 
     def load_token(self, freight_id: int) -> int:
         return random.randint(1_000_000, 9_999_999)
+
+    def read_freight_ids(self) -> list[int]:
+        pass
+
+    def create_freights(self) -> None:
+        pass
+
+    def get_step_delay(self) -> None:
+        pass
+
+    def car_count(self) -> int:
+        pass

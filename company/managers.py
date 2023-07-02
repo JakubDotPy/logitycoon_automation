@@ -1,40 +1,50 @@
 import logging
 
 from company.warehouse import Freight
+from interfaces.base import Interface
 
 log = logging.getLogger(__name__)
 
 
 class FreightManager:
 
-    def __init__(self, game):
-        self.game = game
-        self.active_freights: set[Freight] = set()
+    def __init__(self, interface: Interface):
+        self.interface = interface
 
-        log.debug('freight manager ready')
+        # game details
+        self.active_freights: list[Freight] = []
+
+        log.debug('agent prepared')
+
+    def _load_token(self, freight_id: int) -> None:
+        log.debug('getting token')
+        self.interface.load_token(freight_id=freight_id)
 
     def get_trip_id(self) -> int:
         log.info('choosing best trip')
-        return self.game.interface.get_trip_id()
+        return self.interface.get_trip_id()
 
     def accept_trip(self, trip_id: int) -> None:
-        log.info(f'accepting trip {trip_id}')
-        self.game.interface.accept_trip(trip_id)
+        """Accept the trip by ID.
 
-    def _read_freight_ids(self) -> list[int]:
-        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
-        rows = r.html.find('table:first-of-type tr[onclick]')
-        return list(map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows)))
+        Performs a post request.
+        """
+        log.info(f'accepting trip {trip_id}')
+        self.interface.accept_trip(trip_id=trip_id)
+
+    def read_freight_ids(self) -> list[int]:
+        return self.interface.read_freight_ids()
 
     def create_freights(self) -> None:
         self.active_freights = [
-            Freight(num, self.session)
-            for num in self._read_freight_ids()
+            Freight(num, self.interface.session)
+            for num in self.read_freight_ids()
         ]
-        self._load_token()
+        self._load_token(self.active_freights[0]._id)
+
+    def get_step_delay(self) -> int:
+        return self.interface.get_step_delay()
 
     @property
     def car_count(self) -> int:
-        # NOTE: so far only counts the number of cars
-        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
-        return len(r.html.find('.mt-action-details')) // 2
+        return self.interface.car_count()
