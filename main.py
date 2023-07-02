@@ -254,7 +254,7 @@ class LTAgent:
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
         spans = r.html.find('span[id^="ready-noxs"]')
         seconds = [to_seconds(span.text) for span in spans]
-        return max(seconds) + 10  # add som minimal buffer
+        return max(seconds, default=3) + 10  # add som minimal buffer
 
     @property
     def car_count(self) -> int:
