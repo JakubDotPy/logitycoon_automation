@@ -8,6 +8,19 @@ setup_logging()
 log = logging.getLogger(__name__)
 
 
+def assign_assets() -> None:
+    """Assign assets to already accepted trips."""
+    log.info(' assign assets '.center(40, '='))
+
+    interface = WebInterface()
+    fm = FreightManager(interface)
+
+    fm.create_freights()
+    for freight in fm.active_freights:
+        freight.assign_assets()
+        freight.start_loading()
+
+
 def accept_and_load() -> None:
     """Accept the best trips, create freights and start loading."""
 
