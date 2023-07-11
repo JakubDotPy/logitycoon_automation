@@ -22,12 +22,15 @@ class Interface(ABC):
     def read_freight_ids(self) -> list[int]:
         raise NotImplementedError()
 
+    def read_truck_ids(self) -> list[int]:
+        raise NotImplementedError()
+
     @staticmethod
     def create_freights(self) -> None:
         raise NotImplementedError()
 
     @staticmethod
-    def get_step_delay(self) -> None:
+    def get_step_delay(self) -> int:
         raise NotImplementedError()
 
     @staticmethod

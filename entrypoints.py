@@ -3,9 +3,22 @@ import logging
 from company.managers import FreightManager
 from config import setup_logging
 from interfaces.web import WebInterface
+from utils import random_delay
 
 setup_logging()
 log = logging.getLogger(__name__)
+
+
+def refuel_all() -> None:
+    """Refuel all trucks."""
+    log.info(' refueling trucks '.center(40, '='))
+
+    interface = WebInterface()
+    fm = FreightManager(interface)
+    fm.create_trucks()
+
+    for truck in fm.trucks:
+        random_delay(truck.refuel)()
 
 
 def assign_assets() -> None:
@@ -28,6 +41,8 @@ def accept_and_load() -> None:
 
     interface = WebInterface()
     fm = FreightManager(interface)
+
+    fm.create_trucks()
 
     best_trip_id = fm.get_trip_id()
     for _ in range(fm.car_count):
