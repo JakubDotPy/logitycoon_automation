@@ -1,6 +1,11 @@
 import functools
 import random
 import time
+from enum import Enum
+
+
+class City(Enum):
+    PILSEN = 63
 
 
 def random_delay(func):
