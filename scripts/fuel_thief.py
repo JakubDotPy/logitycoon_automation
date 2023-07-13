@@ -1,29 +1,9 @@
 import logging
-import logging.config
-import os
-from pathlib import Path
 
-from dotenv import dotenv_values
-
-ROOT_DIR = Path(__file__).parent
-LOGS_DIR = ROOT_DIR / 'logs'
-OUTPUT_DIR = ROOT_DIR / 'output'
-
-ENV = {
-    **dotenv_values(ROOT_DIR / 'env/.env_secret'),  # secret values
-    **dotenv_values(ROOT_DIR / 'env/.env_public'),
-    **os.environ,  # override loaded values with environment variables
-}
-
-# urls
-SERVER_URL = ENV['SERVER_URL']
-INDEX_URL = SERVER_URL + '/index.php'
-AJAX_URL = SERVER_URL + 'ajax/'
-
-ACTION_SLEEP_DELAY = 5 * 60  # 5 minutes
-ASD_MINS = round(ACTION_SLEEP_DELAY / 60, 1)  # used in logs
-
-CLICK_DELAY_INTERVAL = 8, 11  # from-to tenth seconds
+from config import INDEX_URL
+from config import LOGS_DIR
+from config import setup_logging
+from interfaces.web import WebInterface
 
 LOG_CONF = {
     'version': 1,
@@ -44,7 +24,7 @@ LOG_CONF = {
         },
         'file_hand_rot': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'logitycoon_automation.log',
+            'filename': LOGS_DIR / f'fuel_thief.log',
             'maxBytes': 3_145_728,  # 3MB
             'backupCount': 5,  # five files with log backup
             'level': 'DEBUG',
@@ -59,11 +39,14 @@ LOG_CONF = {
         }
     }
 }
+setup_logging(LOG_CONF)
+log = logging.getLogger(__name__)
 
+log.info(' fuel thief starting '.center(80, '='))
 
-def setup_logging(config: dict = LOG_CONF):
-    p = ROOT_DIR / 'logs'
-    p.mkdir(parents=True, exist_ok=True)
-    logging.config.dictConfig(config)
-    log = logging.getLogger(__name__)
-    log.debug('Logging was set up.')
+interface = WebInterface()
+web = interface.session  # shortcut
+
+r = web.get(INDEX_URL, params={'a': 'trips'})
+
+log.info(r.status_code)
