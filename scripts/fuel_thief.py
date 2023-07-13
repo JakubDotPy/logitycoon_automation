@@ -2,6 +2,7 @@ import datetime
 import itertools
 import logging
 import re
+import time
 
 from config import INDEX_URL
 from config import LOGS_DIR
@@ -22,7 +23,7 @@ LOG_CONF = {
         'console_hand': {
             'class': 'logging.StreamHandler',
             'stream': 'ext://sys.stdout',
-            'level': 'INFO',
+            'level': 'DEBUG',
             'formatter': 'console_form',
         },
         'file_hand_rot': {
@@ -63,6 +64,8 @@ web = interface.session  # shortcut
 
 def page_company_ids(page_num: int):
     """finds all company ids on a page"""
+    log.info(f'generating companies on page {page_num}')
+
     r = web.get(INDEX_URL, params={'a': 'companylist', 'p': page_num})
     id_matches = re.findall(
         r'href="index\.php\?a\=companyprofile_overview&x=(\d+)"',
@@ -72,6 +75,7 @@ def page_company_ids(page_num: int):
 
 
 def company_id_gen(start_page: int = 30, end_page: int = 40):
+    log.debug('preparing company id generator')
     yield from itertools.chain.from_iterable(
         page_company_ids(page) for page in range(start_page, end_page)
     )
@@ -79,6 +83,8 @@ def company_id_gen(start_page: int = 30, end_page: int = 40):
 
 def company_truck_gen(company_id: int):
     """given company id, yield unprotected truck ids"""
+    log.info(f'generating available trucks from company {company_id}')
+
     r = web.get(INDEX_URL, params={'a': 'companyprofile_trucks', 'x': company_id})
     buttons = r.html.find('.tab-content button:not([disabled])')
     truck_ids = (button.attrs['value'] for button in buttons)
@@ -91,13 +97,15 @@ def get_timeout(company_id: int):
 
     pattern = r'Stealing fuel is available again at (\d+-\d+-\d+ \d+:\d+)'
     if match := re.findall(pattern, r.text):
+        log.info(f'next possible steal at {match[0]}')
         next_time = datetime.datetime.strptime(match[0], '%d-%m-%Y %H:%M')
         delta = next_time - datetime.datetime.now()
         return delta.seconds
-    return 3  # NOTE: by default sleep for 3 seconds between tries
+    return 1  # NOTE: by default sleep for 1 seconds between attempts
 
 
 def steal_fuel(truck_id: int):
+    log.info(f'stealing fuel from truck {truck_id}')
     r = web.post(
         INDEX_URL,
         params={'a': 'stealfuel'},
@@ -107,10 +115,22 @@ def steal_fuel(truck_id: int):
     print(r)
 
 
-cid = company_id_gen()
+def main() -> int:
+    while True:
+        try:
+            cid = company_id_gen()
+            cmp_id = next(cid)
+            for truck_id in company_truck_gen(cmp_id):
+                # sleep until next try
+                delay = get_timeout(cmp_id)
+                log.info(f'will wait for {delay} seconds')
+                time.sleep(delay)
+                steal_fuel(truck_id)
+        except Exception as e:
+            log.exception()
+            return 1
+    return 0
 
-while True:
-    cmp_id = next(cid)
-    ctg = company_truck_gen(cmp_id)
-    trucks = list(ctg)
-    print(trucks)
+
+if __name__ == '__main__':
+    raise SystemExit(main())
