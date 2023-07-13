@@ -106,26 +106,26 @@ def get_timeout(company_id: int):
 
 def steal_fuel(truck_id: int):
     log.info(f'stealing fuel from truck {truck_id}')
-    r = web.post(
-        INDEX_URL,
-        params={'a': 'stealfuel'},
-        data={'truck': truck_id},
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
+    r = web.post(INDEX_URL, params={'a': 'stealfuel'}, data={'truck': truck_id})
     print(r)
 
 
+def wait_the_delay(company_id):
+    # sleep until next try
+    delay = get_timeout(company_id)
+    log.info(f'will wait for {delay} seconds')
+    time.sleep(delay)
+
+
 def main() -> int:
-    while True:
+    cid = company_id_gen()
+    for company_id in cid:
+        # if the script started manually in between waits, wait
+        wait_the_delay(company_id)
         try:
-            cid = company_id_gen()
-            cmp_id = next(cid)
-            for truck_id in company_truck_gen(cmp_id):
-                # sleep until next try
-                delay = get_timeout(cmp_id)
-                log.info(f'will wait for {delay} seconds')
-                time.sleep(delay)
+            for truck_id in company_truck_gen(company_id):
                 steal_fuel(truck_id)
+                wait_the_delay(company_id)
         except Exception as e:
             log.exception()
             return 1

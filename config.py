@@ -17,7 +17,7 @@ ENV = {
 
 # urls
 SERVER_URL = ENV['SERVER_URL']
-INDEX_URL = SERVER_URL + '/index.php'
+INDEX_URL = SERVER_URL + 'index.php'
 AJAX_URL = SERVER_URL + 'ajax/'
 
 ACTION_SLEEP_DELAY = 5 * 60  # 5 minutes
