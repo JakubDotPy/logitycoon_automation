@@ -26,3 +26,11 @@ Cookie: {{cookie}}
 ###
 GET https://www.logitycoon.com/eu1/ajax/freight_finish.php?f=28029177
 Cookie: {{cookie}}
+
+
+###
+POST https://www.logitycoon.com/eu1/index.php?a=stealfuel
+Cookie: {{cookie}}
+content-type: application/x-www-form-urlencoded
+
+truck=701748
