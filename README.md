@@ -11,8 +11,6 @@ This tool aims to automate as much manual work as possible in the game "Logityco
 - Manage company finances (keep as much money on the savings account at any time).
 - Send you daily overview report.
 
-![](header.png)
-
 ## Installation
 
 Windows - python:
@@ -35,7 +33,7 @@ docker-compose up -d
 
 - Clone the tool from this repo.
 - Log in the game in a browser.
-- Copy the cookie string into a file named `.env_secret` in a format `TYCOON_COOKIE=jointhedarksidewehavecookies`.
+- Copy the cookie string into a file named `.env_secret` in a format `LT_COOKIE=jointhedarksidewehavecookies`.
 - Run the tool using docker or python.
 
 ## Release History
