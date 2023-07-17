@@ -62,6 +62,12 @@ class WebInterface(Interface):
         rows = r.html.find('table:first-of-type tr[onclick]')
         return list(map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows)))
 
+    def read_truck_ids(self) -> list[int]:
+        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
+        elems = r.html.find('.tab-content')
+        ids_txt = re.findall(r'Truck (\d+\.\d+)', elems[0].text)
+        return [int('9' + id_t.replace('.', '')) for id_t in ids_txt]
+
     def get_step_delay(self) -> int:
         """Read the delay before next step can be performed."""
 

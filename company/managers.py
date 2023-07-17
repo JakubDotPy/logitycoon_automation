@@ -1,5 +1,6 @@
 import logging
 
+from company.garage import Truck
 from company.warehouse import Freight
 from interfaces.base import Interface
 
@@ -13,6 +14,7 @@ class FreightManager:
 
         # game details
         self.active_freights: list[Freight] = []
+        self.trucks: list[Truck] = []
 
         log.debug('agent prepared')
 
@@ -32,19 +34,22 @@ class FreightManager:
         log.info(f'accepting trip {trip_id}')
         self.interface.accept_trip(trip_id=trip_id)
 
-    def read_freight_ids(self) -> list[int]:
-        return self.interface.read_freight_ids()
-
     def create_freights(self) -> None:
         self.active_freights = [
             Freight(num, self.interface.session)
-            for num in self.read_freight_ids()
+            for num in self.interface.read_freight_ids()
         ]
         self._load_token(self.active_freights[0]._id)
+
+    def create_trucks(self) -> None:
+        self.trucks = [
+            Truck(num, self.interface.session)
+            for num in self.interface.read_truck_ids()
+        ]
 
     def get_step_delay(self) -> int:
         return self.interface.get_step_delay()
 
     @property
     def car_count(self) -> int:
-        return self.interface.car_count()
+        return len(self.trucks)
