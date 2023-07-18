@@ -1,11 +1,12 @@
-import logging
-
-from company.managers import FreightManager
 from config import setup_logging
+
+setup_logging()
+
+import logging
+from company.managers import FreightManager
 from interfaces.web import WebInterface
 from utils import random_delay
 
-setup_logging()
 log = logging.getLogger(__name__)
 
 

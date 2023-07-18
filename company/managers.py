@@ -35,6 +35,7 @@ class FreightManager:
         self.interface.accept_trip(trip_id=trip_id)
 
     def create_freights(self) -> None:
+        log.debug('creating freights')
         self.active_freights = [
             Freight(num, self.interface.session)
             for num in self.interface.read_freight_ids()
