@@ -80,4 +80,4 @@ def do_next_step() -> None:
             code, resp_text = getattr(freight, fn_name)()
             if 'setTimeout' in resp_text:
                 log.info(f'- {fn_name}')
-                continue
+                break
