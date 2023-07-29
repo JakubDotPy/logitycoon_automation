@@ -48,7 +48,7 @@ class Freight:
         return cls(_id, session, state_enum)
 
     def __post_init__(self):
-        self.state_gen = self.state_generator()
+        self.state_gen = self.init_state_gen(self.state)
 
     def __iter__(self):
         return self
@@ -57,9 +57,7 @@ class Freight:
         if self.state == FreightState.FINISHING:
             raise StopIteration
 
-        state = next(self.state_gen)
-        url = self.next_state_url[state]
-        self.request_next_state(url)
+        self.request_next_state()
 
     def request_next_state(self):
         log.info(f'transitioning from {self.state}')
@@ -96,9 +94,12 @@ class Freight:
         log.info(f'{self} - finishing')
         return self._push_the_button(self.next_state_command[FreightState.UNLOADED])
 
-    @staticmethod
-    def state_generator():
-        yield from FreightState
+    def init_state_gen(self, state):
+        gen = iter(FreightState)
+        # advance to start
+        gen = dropwhile(lambda s: s != state, gen)
+        next(gen)
+        return gen
 
     def _assign_employee(self):
         log.debug(f'{self} assigning employees')

@@ -31,7 +31,8 @@ def assign_assets() -> None:
     fm = FreightManager(interface)
 
     fm.create_freights()
-    for freight in fm.active_freights:
+    for num, freight in enumerate(fm.active_freights, start=1):
+        print(f'{num:->10}')
         freight.assign_assets()
         freight.start_loading()
 
@@ -53,7 +54,8 @@ def accept_and_load() -> None:
 
     fm.create_freights()
 
-    for freight in fm.active_freights:
+    for num, freight in enumerate(fm.active_freights, start=1):
+        print(f'{num:->10}')
         freight.assign_assets()
         freight.start_loading()
 
@@ -67,19 +69,9 @@ def do_next_step() -> None:
     fm = FreightManager(interface)
     fm.create_freights()
 
-    fns = [
-        'drive',
-        'continue_driving',
-        'unload',
-        'finish',
-    ]
-
-    # bruteforce try all options
-
-    for freight in fm.active_freights:
-        log.info(f'processing {freight}')
-        for fn_name in fns:
-            code, resp_text = getattr(freight, fn_name)()
-            if 'setTimeout' in resp_text:
-                log.info(f'- {fn_name}')
-                break
+    for num, freight in enumerate(fm.active_freights, start=1):
+        print(f'{num:->10}')
+        try:
+            next(freight)
+        except StopIteration:
+            log.info('freight already finished')
