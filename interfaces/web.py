@@ -58,7 +58,8 @@ class WebInterface(Interface):
 
     def read_freights(self) -> list[int]:
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
-        rows = r.html.find('table:first-of-type tr[onclick]')
+        top_table = r.html.find('table', first=True)
+        rows = top_table.find('tr[onclick]')
         data = [
             (
                 int(re.findall(r'\d+', row.attrs['onclick'])[0]),  # id
