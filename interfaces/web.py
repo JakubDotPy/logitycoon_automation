@@ -56,10 +56,17 @@ class WebInterface(Interface):
     def accept_trip(self, trip_id: int) -> None:
         self.session.post(f"{AJAX_URL}trip_accept.php", data={'freight[]': trip_id})
 
-    def read_freight_ids(self) -> list[int]:
+    def read_freights(self) -> list[int]:
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
         rows = r.html.find('table:first-of-type tr[onclick]')
-        return list(map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows)))
+        data = [
+            (
+                int(re.findall(r'\d+', row.attrs['onclick'])[0]),  # id
+                row.text.splitlines()[2].upper(),  # state
+            )
+            for row in rows
+        ]
+        return data
 
     def read_truck_ids(self) -> list[int]:
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')

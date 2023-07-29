@@ -18,7 +18,7 @@ class LocalInterface(Interface):
     def accept_trip(self, trip_id: int) -> None:
         raise NotImplementedError()
 
-    def read_freight_ids(self) -> list[int]:
+    def read_freights(self) -> list[int]:
         return [random.randint(100, 200) for _ in range(10)]
 
     def read_truck_ids(self) -> list[int]:

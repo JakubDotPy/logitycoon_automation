@@ -1,6 +1,7 @@
 import enum
 import logging
 from dataclasses import dataclass
+from itertools import dropwhile
 
 from requests_html import HTMLSession
 
@@ -41,6 +42,11 @@ class Freight:
         FreightState.UNLOADED: 'freight_finish',
     }
 
+    @classmethod
+    def from_state_str(cls, _id, session, state_str):
+        state_enum = FreightState.__members__[state_str]
+        return cls(_id, session, state_enum)
+
     def __post_init__(self):
         self.state_gen = self.state_generator()
 
@@ -60,7 +66,7 @@ class Freight:
         if command := self.next_state_command.get(self.state):
             self._push_the_button(command)
         self.state = next(self.state_gen)
-        log.debug(f'now in {self.state}')
+        log.info(f'now in {self.state}')
 
     @random_delay
     def _push_the_button(self, command):
@@ -71,23 +77,23 @@ class Freight:
         return r.status_code, r.text
 
     def start_loading(self) -> None:
-        log.info(f'{self._id} - loading')
+        log.info(f'{self} - loading')
         return self._push_the_button(self.next_state_command[FreightState.ACCEPTED])
 
     def drive(self) -> None:
-        log.info(f'{self._id} - driving')
+        log.info(f'{self} - driving')
         return self._push_the_button(self.next_state_command[FreightState.LOADED])
 
     def continue_driving(self) -> tuple[int, str]:
-        log.info(f'{self._id} - continue driving')
+        log.info(f'{self} - continue driving')
         return self._push_the_button('freight_continue')
 
     def unload(self) -> None:
-        log.info(f'{self._id} - unloading')
+        log.info(f'{self} - unloading')
         return self._push_the_button(self.next_state_command[FreightState.ARRIVED])
 
     def finish(self) -> None:
-        log.info(f'{self._id} - finishing')
+        log.info(f'{self} - finishing')
         return self._push_the_button(self.next_state_command[FreightState.UNLOADED])
 
     @staticmethod
@@ -95,21 +101,21 @@ class Freight:
         yield from FreightState
 
     def _assign_employee(self):
-        log.debug(f'{self._id} assigning employees')
+        log.debug(f'{self} assigning employees')
         r = self.session.get(
             f"{AJAX_URL}freight_autowhemployee.php",
             params={'n': self._id, 'token': self.session.user_token}
         )
 
     def _assign_truck(self):
-        log.debug(f'{self._id} assigning truck')
+        log.debug(f'{self} assigning truck')
         r = self.session.get(
             f"{AJAX_URL}freight_autotruck.php",
             params={'n': self._id, 'token': self.session.user_token}
         )
 
     def _assign_trailer(self):
-        log.debug(f'{self._id} assigning trailer')
+        log.debug(f'{self} assigning trailer')
         r = self.session.get(
             f"{AJAX_URL}freight_autotrailer.php",
             params={'n': self._id, 'token': self.session.user_token}
@@ -117,10 +123,10 @@ class Freight:
 
     @random_delay
     def assign_assets(self):
-        log.info(f'assigning assets to freight {self._id}')
+        log.info(f'assigning assets to {self}')
         self._assign_employee()
         self._assign_truck()
         self._assign_trailer()
 
     def __str__(self):
-        return f'Freight {self._id}'
+        return f'Freight {self._id} {self.state.name}'

@@ -39,8 +39,8 @@ class FreightManager:
     def create_freights(self) -> None:
         log.debug('creating freights')
         self.active_freights = [
-            Freight(num, self.interface.session)
-            for num in self.interface.read_freight_ids()
+            Freight.from_state_str(num, self.interface.session, state_str)
+            for num, state_str in self.interface.read_freights()
         ]
         self._load_token(self.active_freights[0]._id)
 
