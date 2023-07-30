@@ -34,7 +34,6 @@ class WebInterface(Interface):
         self.session.headers.update({'Cookie': ENV['LT_COOKIE']})
 
     def load_token(self, freight_id: int) -> int:
-        log.debug('loading token')
         r = self.session.get(INDEX_URL, params={'a': 'freight', 'n': freight_id})
         token = int(re.findall(r'token: "(\d+)"', r.text)[0])
         self.session.user_token = token
@@ -67,6 +66,13 @@ class WebInterface(Interface):
         elems = r.html.find('.tab-content')
         ids_txt = re.findall(r'Truck (\d+\.\d+)', elems[0].text)
         return [int('9' + id_t.replace('.', '')) for id_t in ids_txt]
+
+    def refuel(self, truck, source_code: str = '') -> None:
+        # a=fuelstation & f=14 & p=1 & returnfr=0
+        r = self.session.get(
+            f"{AJAX_URL}fuelstation_refuel{source}.php",
+            params={'x': truck._id, 'p': 1, 'returnfr': 0}
+        )
 
     def get_step_delay(self) -> int:
         """Read the delay before next step can be performed."""

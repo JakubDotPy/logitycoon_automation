@@ -1,14 +1,11 @@
-import functools
-
-from company.garage import Truck
 from config import setup_logging
 
 setup_logging()
 
 import logging
+from company.managers import GarageManager
 from company.managers import FreightManager
 from interfaces.web import WebInterface
-from utils import random_delay
 
 log = logging.getLogger(__name__)
 
@@ -18,13 +15,12 @@ def refuel_all() -> None:
     log.info(' refueling trucks '.center(40, '='))
 
     interface = WebInterface()
-    fm = FreightManager(interface)
-    fm.create_trucks()
+    gm = GarageManager(interface)
+    gm.create_trucks()
 
-    for truck in fm.trucks:
-        for source in Truck.fuel_source:
-            fn = functools.partial(truck.refuel, source)
-            random_delay(fn)()
+    for num, truck in enumerate(gm.trucks, start=1):
+        print(f'{num:->10}')
+        gm.refuel(truck, source=None)
 
 
 def assign_assets() -> None:
@@ -47,11 +43,12 @@ def accept_and_load() -> None:
 
     interface = WebInterface()
     fm = FreightManager(interface)
+    gm = GarageManager(interface)
 
-    fm.create_trucks()
+    gm.create_trucks()
 
     best_trip_id = fm.get_trip_id()
-    for _ in range(fm.car_count):
+    for _ in range(gm.car_count):
         fm.accept_trip(best_trip_id)
 
     fm.create_freights()
