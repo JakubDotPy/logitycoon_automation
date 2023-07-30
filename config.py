@@ -39,7 +39,7 @@ LOG_CONF = {
         'console_hand': {
             'class': 'logging.StreamHandler',
             'stream': 'ext://sys.stdout',
-            'level': 'INFO',
+            'level': 'DEBUG',
             'formatter': 'console_form',
         },
         'file_hand_rot': {

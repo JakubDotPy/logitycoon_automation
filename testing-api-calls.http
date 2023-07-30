@@ -5,6 +5,17 @@ Cookie: {{cookie}}
 
 freight[]=350991354
 
+
+### tire switch
+POST https://www.logitycoon.com/eu1/ajax/garage_tireswitchall.php
+Content-Type: application/json
+Cookie: {{cookie}}
+
+{
+  "wintertires": "1"
+}
+
+
 ### freight autoall
 GET https://www.logitycoon.com/eu1/ajax/freight_autoall?n=27519645
 

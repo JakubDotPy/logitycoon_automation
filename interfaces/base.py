@@ -18,23 +18,20 @@ class Interface(ABC):
     def accept_trip(self, trip_id: int) -> None:
         raise NotImplementedError()
 
-    @staticmethod
+    @abstractmethod
     def read_freight_ids(self) -> list[int]:
         raise NotImplementedError()
 
+    @abstractmethod
     def read_truck_ids(self) -> list[int]:
         raise NotImplementedError()
 
-    @staticmethod
-    def create_freights(self) -> None:
+    @abstractmethod
+    def refuel(self, truck, source_code: str = '') -> None:
         raise NotImplementedError()
 
-    @staticmethod
+    @abstractmethod
     def get_step_delay(self) -> int:
-        raise NotImplementedError()
-
-    @staticmethod
-    def car_count(self) -> int:
         raise NotImplementedError()
 
     def __str__(self):

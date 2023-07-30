@@ -7,24 +7,26 @@ log = logging.getLogger(__name__)
 
 
 class LocalInterface(Interface):
-
-    def accept_trip(self, trip_id: int) -> None:
-        pass
-
-    def get_trip_id(self) -> int:
-        pass
+    session = None
 
     def load_token(self, freight_id: int) -> int:
-        return random.randint(1_000_000, 9_999_999)
+        raise NotImplementedError()
+
+    def get_trip_id(self) -> int:
+        raise NotImplementedError()
+
+    def accept_trip(self, trip_id: int) -> None:
+        raise NotImplementedError()
 
     def read_freight_ids(self) -> list[int]:
-        pass
+        return [random.randint(100, 200) for _ in range(10)]
 
-    def create_freights(self) -> None:
-        pass
+    def read_truck_ids(self) -> list[int]:
+        return [random.randint(100, 200) for _ in range(10)]
 
-    def get_step_delay(self) -> None:
-        pass
+    def refuel(self, truck, source_code: str = '') -> None:
+        log.debug(f'got {source_code=}')
+        return None
 
-    def car_count(self) -> int:
-        pass
+    def get_step_delay(self) -> int:
+        raise NotImplementedError()

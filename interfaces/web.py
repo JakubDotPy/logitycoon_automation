@@ -34,7 +34,6 @@ class WebInterface(Interface):
         self.session.headers.update({'Cookie': ENV['LT_COOKIE']})
 
     def load_token(self, freight_id: int) -> int:
-        log.debug('loading token')
         r = self.session.get(INDEX_URL, params={'a': 'freight', 'n': freight_id})
         token = int(re.findall(r'token: "(\d+)"', r.text)[0])
         self.session.user_token = token
@@ -68,6 +67,12 @@ class WebInterface(Interface):
         ids_txt = re.findall(r'Truck (\d+\.\d+)', elems[0].text)
         return [int('9' + id_t.replace('.', '')) for id_t in ids_txt]
 
+    def refuel(self, truck, source_code: str = '') -> None:
+        r = self.session.get(
+            f"{AJAX_URL}fuelstation_refuel{source_code}.php",
+            params={'x': truck._id, 'p': 1, 'returnfr': 0}
+        )
+
     def get_step_delay(self) -> int:
         """Read the delay before next step can be performed."""
 
@@ -79,8 +84,3 @@ class WebInterface(Interface):
         spans = r.html.find('span[id^="ready-noxs"]')
         seconds = [to_seconds(span.text) for span in spans]
         return max(seconds, default=3) + 10  # add some minimal buffer
-
-    def car_count(self):
-        # NOTE: so far only counts the number of cars
-        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
-        return len(r.html.find('.mt-action-details')) // 2
