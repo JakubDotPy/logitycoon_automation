@@ -63,22 +63,22 @@ class GarageManager:
 
     def refuel(self, truck, source: str | None = 'public') -> None:
 
+        if source:
+            log.debug(f'{truck._id} refueling from public')
+            self.interface.refuel(truck, source_code='')
+            return
+
         fuel_source = {
             'fuel_tank': 'ft',
             'corporation': 'c',
             'public': '',
         }
 
-        if source:
-            log.debug(f'{truck._id} refueling from {source}')
-            self.interface.refuel(truck, source_code='')
-            return
-
         # refuel from all possible sources
         for source_name, source_code in fuel_source.items():
             log.debug(f'{truck._id} refueling from {source_name}')
             # wait between sources
-            fn = functools.partial(self.interface.refuel, truck, source_code=None)
+            fn = functools.partial(self.interface.refuel, truck, source_code)
             random_delay(fn)()
 
     @property

@@ -25,16 +25,8 @@ class LocalInterface(Interface):
         return [random.randint(100, 200) for _ in range(10)]
 
     def refuel(self, truck, source_code: str = '') -> None:
+        log.debug(f'got {source_code=}')
         return None
-
-    def create_freights(self) -> None:
-        raise NotImplementedError()
 
     def get_step_delay(self) -> int:
         raise NotImplementedError()
-
-    def car_count(self) -> int:
-        raise NotImplementedError()
-
-    def __str__(self):
-        return f'{self.__class__.__name__}'

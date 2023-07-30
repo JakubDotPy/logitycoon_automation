@@ -31,15 +31,7 @@ class Interface(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def create_freights(self) -> None:
-        raise NotImplementedError()
-
-    @abstractmethod
     def get_step_delay(self) -> int:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def car_count(self) -> int:
         raise NotImplementedError()
 
     def __str__(self):

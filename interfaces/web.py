@@ -68,9 +68,8 @@ class WebInterface(Interface):
         return [int('9' + id_t.replace('.', '')) for id_t in ids_txt]
 
     def refuel(self, truck, source_code: str = '') -> None:
-        # a=fuelstation & f=14 & p=1 & returnfr=0
         r = self.session.get(
-            f"{AJAX_URL}fuelstation_refuel{source}.php",
+            f"{AJAX_URL}fuelstation_refuel{source_code}.php",
             params={'x': truck._id, 'p': 1, 'returnfr': 0}
         )
 
@@ -85,8 +84,3 @@ class WebInterface(Interface):
         spans = r.html.find('span[id^="ready-noxs"]')
         seconds = [to_seconds(span.text) for span in spans]
         return max(seconds, default=3) + 10  # add some minimal buffer
-
-    def car_count(self):
-        # NOTE: so far only counts the number of cars
-        r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
-        return len(r.html.find('.mt-action-details')) // 2
