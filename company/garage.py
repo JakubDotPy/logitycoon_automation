@@ -1,5 +1,8 @@
 import logging
+from dataclasses import Field
 from dataclasses import dataclass
+from dataclasses import field
+from typing import ClassVar
 
 from requests_html import HTMLSession
 
@@ -16,12 +19,19 @@ class Truck:
     _id: int
     session: HTMLSession
 
-    def refuel(self) -> None:
+    fuel_source: ClassVar[dict[str, str]] = {
+        'public'     : '',
+        'corporation': 'c',
+        'fuel_tank'  : 'ft',
+    }
+
+    def refuel(self, source: str = 'public') -> None:
         log.debug(f'{self._id} refueling')
         r = self.session.get(
-            f"{AJAX_URL}fuelstation_refuel.php",
+            f"{AJAX_URL}fuelstation_refuel{self.fuel_source[source]}.php",
             params={'x': self._id, 'p': 1, 'returnfr': 0}
         )
+        # a=fuelstation & f=14 & p=1 & returnfr=0
 
     @random_delay
     def transfer(self, city: City = City.PILSEN) -> None:

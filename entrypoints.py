@@ -1,3 +1,6 @@
+import functools
+
+from company.garage import Truck
 from config import setup_logging
 
 setup_logging()
@@ -19,7 +22,9 @@ def refuel_all() -> None:
     fm.create_trucks()
 
     for truck in fm.trucks:
-        random_delay(truck.refuel)()
+        for source in Truck.fuel_source:
+            fn = functools.partial(truck.refuel, source)
+            random_delay(fn)()
 
 
 def assign_assets() -> None:
