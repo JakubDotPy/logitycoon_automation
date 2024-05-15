@@ -5,20 +5,20 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
+ROOT_DIR = Path(__file__).parent
+LOGS_DIR = ROOT_DIR / 'logs'
+OUTPUT_DIR = ROOT_DIR / 'output'
+
 ENV = {
-    **dotenv_values('env/.env_secret'),  # secret values
-    **dotenv_values('env/.env_public'),
+    **dotenv_values(ROOT_DIR / 'env/.env_secret'),  # secret values
+    **dotenv_values(ROOT_DIR / 'env/.env_public'),
     **os.environ,  # override loaded values with environment variables
 }
 
 # urls
 SERVER_URL = ENV['SERVER_URL']
-INDEX_URL = SERVER_URL + '/index.php'
+INDEX_URL = SERVER_URL + 'index.php'
 AJAX_URL = SERVER_URL + 'ajax/'
-
-CURRENT_DIR = Path.cwd()
-LOGS_DIR = CURRENT_DIR / 'logs'
-OUTPUT_DIR = CURRENT_DIR / 'output'
 
 ACTION_SLEEP_DELAY = 5 * 60  # 5 minutes
 ASD_MINS = round(ACTION_SLEEP_DELAY / 60, 1)  # used in logs
@@ -65,9 +65,9 @@ LOG_CONF = {
 }
 
 
-def setup_logging():
-    p = CURRENT_DIR / 'logs'
+def setup_logging(config: dict = LOG_CONF):
+    p = ROOT_DIR / 'logs'
     p.mkdir(parents=True, exist_ok=True)
-    logging.config.dictConfig(LOG_CONF)
+    logging.config.dictConfig(config)
     log = logging.getLogger(__name__)
     log.debug('Logging was set up.')
