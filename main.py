@@ -80,4 +80,6 @@ def main() -> int:
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    raise SystemExit(main())
+    from entrypoints import refuel_all
+    refuel_all()
+    # raise SystemExit(main())

@@ -76,10 +76,27 @@ class WebInterface(Interface):
         return [int('9' + id_t.replace('.', '')) for id_t in ids_txt]
 
     def refuel(self, truck, source_code: str = '') -> None:
-        r = self.session.get(
-            f"{AJAX_URL}fuelstation_refuel{source_code}.php",
-            params={'x': truck._id, 'p': 1, 'returnfr': 0}
+        url = f"{AJAX_URL}fuelstation_refuel{source_code}.php"
+        params = {'x': truck._id, 'p': 1, 'returnfr': 0}
+        r = self.session.get(url, params=params)
+        r.raise_for_status()
+
+
+    def steal_fuel(self, truck_id) -> None:
+        """Steal from the truck id.
+
+        https://www.logitycoon.com/eu1/index.php?a=stealfuel
+        form_data - truck:1112188
+
+        
+        default right now is the one that works
+        """
+        r = self.session.post(
+            f"{INDEX_URL}",
+            params={'a': 'stealfuel'},
+            data={'truck': truck_id},
         )
+        return r
 
     def get_step_delay(self) -> int:
         """Read the delay before next step can be performed."""

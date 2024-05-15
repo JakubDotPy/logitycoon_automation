@@ -81,6 +81,11 @@ class GarageManager:
             fn = functools.partial(self.interface.refuel, truck, source_code)
             random_delay(fn)()
 
+    
+    def steal_fuel(self, truck_id: str='1112188'):
+        log.debug(f'stealing from {truck_id}')
+        resp = self.interface.steal_fuel(truck_id)
+
     @property
     def car_count(self) -> int:
         return len(self.trucks)
