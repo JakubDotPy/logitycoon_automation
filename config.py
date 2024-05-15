@@ -53,7 +53,11 @@ LOG_CONF = {
         },
     },
     'loggers': {
-        'root': {
+        'company': {
+            'handlers': ['console_hand', 'file_hand_rot'],
+            'level': 'DEBUG',
+        },
+        'interfaces': {
             'handlers': ['console_hand', 'file_hand_rot'],
             'level': 'DEBUG',
         }

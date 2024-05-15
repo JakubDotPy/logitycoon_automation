@@ -56,10 +56,18 @@ class WebInterface(Interface):
     def accept_trip(self, trip_id: int) -> None:
         self.session.post(f"{AJAX_URL}trip_accept.php", data={'freight[]': trip_id})
 
-    def read_freight_ids(self) -> list[int]:
+    def read_freights(self) -> list[int]:
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=warehouse')
-        rows = r.html.find('table:first-of-type tr[onclick]')
-        return list(map(int, (re.findall(r'\d+', row.attrs['onclick'])[0] for row in rows)))
+        top_table = r.html.find('table', first=True)
+        rows = top_table.find('tr[onclick]')
+        data = [
+            (
+                int(re.findall(r'\d+', row.attrs['onclick'])[0]),  # id
+                row.text.splitlines()[2].upper(),  # state
+            )
+            for row in rows
+        ]
+        return data
 
     def read_truck_ids(self) -> list[int]:
         r = self.session.get('https://www.logitycoon.com/eu1/index.php?a=garage')
@@ -68,10 +76,27 @@ class WebInterface(Interface):
         return [int('9' + id_t.replace('.', '')) for id_t in ids_txt]
 
     def refuel(self, truck, source_code: str = '') -> None:
-        r = self.session.get(
-            f"{AJAX_URL}fuelstation_refuel{source_code}.php",
-            params={'x': truck._id, 'p': 1, 'returnfr': 0}
+        url = f"{AJAX_URL}fuelstation_refuel{source_code}.php"
+        params = {'x': truck._id, 'p': 1, 'returnfr': 0}
+        r = self.session.get(url, params=params)
+        r.raise_for_status()
+
+
+    def steal_fuel(self, truck_id) -> None:
+        """Steal from the truck id.
+
+        https://www.logitycoon.com/eu1/index.php?a=stealfuel
+        form_data - truck:1112188
+
+        
+        default right now is the one that works
+        """
+        r = self.session.post(
+            f"{INDEX_URL}",
+            params={'a': 'stealfuel'},
+            data={'truck': truck_id},
         )
+        return r
 
     def get_step_delay(self) -> int:
         """Read the delay before next step can be performed."""

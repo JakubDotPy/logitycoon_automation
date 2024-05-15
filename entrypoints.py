@@ -1,4 +1,5 @@
 from config import setup_logging
+import argparse
 
 setup_logging()
 
@@ -23,6 +24,14 @@ def refuel_all() -> None:
         gm.refuel(truck, source=None)
 
 
+def steal_fuel() -> None:
+    log.info(' stealing fuel '.center(40, '='))
+    
+    interface = WebInterface()
+    gm = GarageManager(interface)
+    gm.steal_fuel()
+
+
 def assign_assets() -> None:
     """Assign assets to already accepted trips."""
     log.info(' assign assets '.center(40, '='))
@@ -31,7 +40,8 @@ def assign_assets() -> None:
     fm = FreightManager(interface)
 
     fm.create_freights()
-    for freight in fm.active_freights:
+    for num, freight in enumerate(fm.active_freights, start=1):
+        print(f'{num:->10}')
         freight.assign_assets()
         freight.start_loading()
 
@@ -41,19 +51,27 @@ def accept_and_load() -> None:
 
     log.info(' accept_and_load '.center(40, '='))
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('trip_id', type=int, help='trip ID', nargs='?')
+    parser.add_argument('num_trips', type=int, help='how many trips to accept', nargs='?')
+    args = parser.parse_args()
+    
     interface = WebInterface()
     fm = FreightManager(interface)
     gm = GarageManager(interface)
 
     gm.create_trucks()
 
-    best_trip_id = fm.get_trip_id()
-    for _ in range(gm.car_count):
+    best_trip_id = args.trip_id or fm.get_trip_id()
+    how_many = args.num_trips or gm.car_count
+    
+    for _ in range(how_many):
         fm.accept_trip(best_trip_id)
 
     fm.create_freights()
 
-    for freight in fm.active_freights:
+    for num, freight in enumerate(fm.active_freights, start=1):
+        print(f'{num:->10}')
         freight.assign_assets()
         freight.start_loading()
 
@@ -67,19 +85,9 @@ def do_next_step() -> None:
     fm = FreightManager(interface)
     fm.create_freights()
 
-    fns = [
-        'drive',
-        'continue_driving',
-        'unload',
-        'finish',
-    ]
-
-    # bruteforce try all options
-
-    for freight in fm.active_freights:
-        log.info(f'processing {freight}')
-        for fn_name in fns:
-            code, resp_text = getattr(freight, fn_name)()
-            if 'setTimeout' in resp_text:
-                log.info(f'- {fn_name}')
-                break
+    for num, freight in enumerate(fm.active_freights, start=1):
+        print(f'{num:->10}')
+        try:
+            next(freight)
+        except StopIteration:
+            log.info('freight already finished')

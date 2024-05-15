@@ -19,7 +19,7 @@ class Interface(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_freight_ids(self) -> list[int]:
+    def read_freights(self) -> list[int]:
         raise NotImplementedError()
 
     @abstractmethod

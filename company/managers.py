@@ -39,8 +39,8 @@ class FreightManager:
     def create_freights(self) -> None:
         log.debug('creating freights')
         self.active_freights = [
-            Freight(num, self.interface.session)
-            for num in self.interface.read_freight_ids()
+            Freight.from_state_str(num, self.interface.session, state_str)
+            for num, state_str in self.interface.read_freights()
         ]
         self._load_token(self.active_freights[0]._id)
 
@@ -80,6 +80,11 @@ class GarageManager:
             # wait between sources
             fn = functools.partial(self.interface.refuel, truck, source_code)
             random_delay(fn)()
+
+    
+    def steal_fuel(self, truck_id: str='1112188'):
+        log.debug(f'stealing from {truck_id}')
+        resp = self.interface.steal_fuel(truck_id)
 
     @property
     def car_count(self) -> int:
