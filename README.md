@@ -4,6 +4,11 @@
 
 [![Release][release-url]][release-url]
 
+![Static Badge](https://img.shields.io/badge/state-under_construction-orange)  
+Please note that the tool is still in active development and some features may be yet undocummented.
+
+## About
+
 This tool aims to automate as much manual work as possible in the game "Logitycoon".
 
 - Select the best routes, assign trucks, trailers and employees.
@@ -13,7 +18,7 @@ This tool aims to automate as much manual work as possible in the game "Logityco
 
 ## Installation
 
-Windows - python:
+Windows - python - run from source:
 
 ```sh
 git clone "https://github.com/JakubDotPy/logitycoon_automation"
@@ -21,12 +26,6 @@ cd logitycoon_automation
 python -m venv venv
 venv/Scripts/activate
 python main.py
-```
-
-Windows - docker:
-
-```sh
-docker-compose up -d
 ```
 
 ## Usage example
